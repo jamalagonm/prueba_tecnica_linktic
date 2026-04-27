@@ -1,0 +1,30 @@
+server:
+  port: ${SERVER_PORT:8091}
+
+spring:
+  application:
+    name: inventario-service
+
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:inventario_db}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+# API Key para seguridad
+app:
+  security:
+    api-key: ${API_KEY:default-key}
+
+producto:
+  service:
+    url: ${PRODUCTO_BASE_URL:http://localhost:8091}
