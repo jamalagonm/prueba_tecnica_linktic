@@ -76,7 +76,7 @@ docker-compose down
                                  ▼
                          ┌───────────────┐
                          │  API Gateway  │
-                         │    :8090      │
+                         │    :8080      │
                          └───┬───────┬───┘
                              │       │
           /api/v1/productos  │       │  /api/v1/inventario
