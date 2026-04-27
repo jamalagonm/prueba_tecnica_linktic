@@ -1,0 +1,103 @@
+version: '3.8'
+
+services:
+
+  # ============================================
+  # Base de datos PostgreSQL
+  # ============================================
+  postgres-db:
+    image: postgres:16-alpine
+    container_name: postgres-db
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres} -d ${DB_NAME:-microservicios_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - microservices-network
+    restart: unless-stopped
+
+  # ============================================
+  # Microservicio: Producto
+  # ============================================
+  producto-service:
+    build:
+      context: ./producto-service
+      dockerfile: Dockerfile
+    container_name: producto-service
+    env_file:
+      - .env
+    environment:
+      SERVER_PORT: 8090
+      INVENTARIO_BASE_URL: ${INVENTARIO_SERVICE_URL:-http://inventario-service:8091}
+    ports:
+      - "${PRODUCTO_SERVICE_PORT:-8090}:8090"
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+    networks:
+      - microservices-network
+    restart: on-failure
+
+  # ============================================
+  # Microservicio: Inventario
+  # ============================================
+  inventario-service:
+    build:
+      context: ./inventario-service
+      dockerfile: Dockerfile
+    container_name: inventario-service
+    env_file:
+      - .env
+    environment:
+      SERVER_PORT: 8091
+      PRODUCTO_BASE_URL: ${PRODUCTO_SERVICE_URL:-http://producto-service:8090}
+    ports:
+      - "${INVENTARIO_SERVICE_PORT:-8091}:8091"
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+    networks:
+      - microservices-network
+    restart: on-failure
+
+  # ============================================
+  # API Gateway
+  # ============================================
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    container_name: api-gateway
+    env_file:
+      - .env
+    environment:
+      GATEWAY_PORT: 8080
+    ports:
+      - "${GATEWAY_PORT:-8080}:8080"
+    depends_on:
+      - producto-service
+      - inventario-service
+    networks:
+      - microservices-network
+    restart: on-failure
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  microservices-network:
+    driver: bridge
