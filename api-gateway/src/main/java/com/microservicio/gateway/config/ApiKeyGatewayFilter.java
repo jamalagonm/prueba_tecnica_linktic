@@ -20,6 +20,7 @@ public class ApiKeyGatewayFilter implements GlobalFilter, Ordered {
     @Value("${app.security.api-key}")
     private String apiKey;
 
+
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         String requestApiKey = exchange.getRequest().getHeaders().getFirst(API_KEY_HEADER);
