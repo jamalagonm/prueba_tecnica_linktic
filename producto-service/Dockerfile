@@ -6,7 +6,7 @@ COPY pom.xml .
 RUN mvn dependency:go-offline -B -q
 
 COPY src ./src
-RUN mvn clean package -DskipTests -B -q
+RUN mvn clean package -B -q
 
 # ---- Runtime stage ----
 FROM eclipse-temurin:21-jre-alpine
