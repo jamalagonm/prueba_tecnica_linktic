@@ -1,0 +1,59 @@
+server:
+  port: ${GATEWAY_PORT:8080}
+
+spring:
+  application:
+    name: api-gateway
+
+  cloud:
+    gateway:
+      httpclient:
+        connect-timeout: ${GATEWAY_CONNECT_TIMEOUT_MS:5000}
+        response-timeout: ${GATEWAY_RESPONSE_TIMEOUT:5s}
+      routes:
+        # ============================================
+        # Microservicio Producto - Puerto 8090
+        # ============================================
+        - id: producto-service
+          uri: ${PRODUCTO_SERVICE_URL:http://localhost:8080}
+          predicates:
+            - Path=/api/v1/productos/**
+          filters:
+            - StripPrefix=0
+
+        # ============================================
+        # Microservicio Inventario - Puerto 8091
+        # ============================================
+        - id: inventario-service
+          uri: ${INVENTARIO_SERVICE_URL:http://localhost:8081}
+          predicates:
+            - Path=/api/v1/inventario/**
+          filters:
+            - StripPrefix=0
+
+        - id: compra-service
+          uri: ${INVENTARIO_SERVICE_URL:http://localhost:8081}
+          predicates:
+            - Path=/api/v1/compra/**
+          filters:
+            - StripPrefix=0
+
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Origin
+
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowed-origins: "*"
+            allowed-methods: "*"
+            allowed-headers: "*"
+
+# API Key
+app:
+  security:
+    api-key: ${API_KEY:default-key}
+
+# Logging
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
